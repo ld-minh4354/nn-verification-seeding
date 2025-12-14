@@ -23,8 +23,16 @@ for (( X=0; X<20; X++ )); do
         srun python code/property_gen/generate_property_script.py \
         --epsilon $EPSILON --index $ID --job $SLURM_ARRAY_TASK_ID
 
+        start_time=$(date +%s)
+
         timeout 5m srun python $HOME/eml-verification/alpha-beta-CROWN/complete_verifier/abcrown.py \
         --config $HOME/eml-verification/properties/current_${SLURM_ARRAY_TASK_ID}.yaml
+
+        end_time=$(date +%s)
+        elapsed=$((end_time - start_time))
+
+        echo
+        echo "RUNTIME: $elapsed"
 
     } &> "$LOGFILE"
 done
