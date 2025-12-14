@@ -16,8 +16,8 @@ class ModelStatsCIFAR10:
         self.add_project_folder_to_pythonpath()
         self.device = torch.device("cuda")
 
-        self.model_type = ["baseline", "prune_0.2", "prune_0.4", "prune_0.6", "prune_0.7",
-                           "prune_0.75", "prune_0.8", "prune_0.85", "prune_0.9"]
+        self.model_type = ["baseline", "prune_0.1", "prune_0.2", "prune_0.3", "prune_0.4",
+                           "prune_0.5", "prune_0.6", "prune_0.7", "prune_0.8"]
         self.seed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
         self.df = pd.DataFrame(columns=["model_type", "seed", "accuracy", "zero_weight_percentage"])
@@ -32,10 +32,20 @@ class ModelStatsCIFAR10:
     def main(self):
         self.load_data()
         self.process_models()
+        self.process_data()
+        
 
+    def process_data(self):
         os.makedirs("results", exist_ok=True)
         self.df.to_csv(os.path.join("results", "model_stats_CIFAR10.csv"), index=False)
 
+        self.df = (
+            self.df
+            .groupby(["model_type"], as_index=False)
+            .agg(accuracy_avg=("accuracy", "mean"),
+                 accuracy_std=("accuracy", "std"))
+        )
+        self.df.to_csv(os.path.join("results", "model_stats_CIFAR10_summary.csv"), index=False)
 
     def load_data(self):
         self.num_classes = 10
@@ -70,9 +80,6 @@ class ModelStatsCIFAR10:
 
     def load_model(self, model_type, seed):
         model = ResNet18(BasicBlock, [2, 2, 2, 2], in_planes=16)
-        model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        model.maxpool = nn.Identity()
-        model.fc = nn.Linear(512, self.num_classes)
         model = model.to(self.device)
 
         state_dict = torch.load(os.path.join("models", "CIFAR10", model_type, f"resnet18-CIFAR10-{seed}.pth"), 
