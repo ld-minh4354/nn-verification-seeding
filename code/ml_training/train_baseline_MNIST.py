@@ -93,18 +93,12 @@ class TrainBaselineMNIST:
         os.makedirs(os.path.join("models", "MNIST", "baseline"), exist_ok=True)
         torch.save(self.model.state_dict(), os.path.join("models", "MNIST", "baseline", f"resnet4-MNIST-{self.seed}.pth"))
 
-        # x = torch.randn(1, 1, 28, 28).to(self.device)
-        # torch.onnx.export(self.model, x, os.path.join("models", "MNIST", "baseline", f"resnet4-MNIST-{self.seed}.onnx"),
-        #                   export_params=True, external_data=False,
-        #                   input_names=['input'], output_names=['output'],
-        #                   dynamic_axes={'input' : {0 : 'batch_size'}, 'output' : {0 : 'batch_size'}})
-
 
     def train_loop(self, epoch):
         self.model.train()
         total_loss = 0
 
-        for batch_idx, (inputs, targets) in enumerate(self.train_loader):
+        for _, (inputs, targets) in enumerate(self.train_loader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             outputs = self.model(inputs)
 

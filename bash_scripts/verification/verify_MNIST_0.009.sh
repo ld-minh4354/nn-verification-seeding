@@ -20,7 +20,7 @@ for (( X=0; X<20; X++ )); do
     LOGFILE="logs_verification/MNIST_${EPSILON}_${ID}.out"
 
     {
-        srun python code/property_gen/generate_property_script.py \
+        srun python code/property_gen/generate_property_MNIST.py \
         --epsilon $EPSILON --index $ID --job $SLURM_ARRAY_TASK_ID
 
         start_time=$(date +%s)

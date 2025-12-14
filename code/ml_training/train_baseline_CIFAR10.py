@@ -80,11 +80,6 @@ class TrainBaselineCIFAR10:
 
 
     def training(self):
-        # self.model = models.resnet18()
-        # self.model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        # self.model.maxpool = nn.Identity()
-        # self.model.avgpool = nn.AvgPool2d(kernel_size=4)
-        # self.model.fc = nn.Linear(512, self.num_classes)
         self.model = ResNet18(BasicBlock, [2, 2, 2, 2], in_planes=16)
         self.model = self.model.to(self.device)
 
@@ -105,18 +100,12 @@ class TrainBaselineCIFAR10:
         os.makedirs(os.path.join("models", "CIFAR10", "baseline"), exist_ok=True)
         torch.save(self.model.state_dict(), os.path.join("models", "CIFAR10", "baseline", f"resnet18-CIFAR10-{self.seed}.pth"))
 
-        x = torch.randn(1, 3, 32, 32).to(self.device)
-        torch.onnx.export(self.model, x, os.path.join("models", "CIFAR10", "baseline", f"resnet18-CIFAR10-{self.seed}.onnx"),
-                          export_params=True, external_data=False,
-                          input_names=['input'], output_names=['output'],
-                          dynamic_axes={'input' : {0 : 'batch_size'}, 'output' : {0 : 'batch_size'}})
-
 
     def train_loop(self, epoch):
         self.model.train()
         total_loss = 0
 
-        for batch_idx, (inputs, targets) in enumerate(self.train_loader):
+        for _, (inputs, targets) in enumerate(self.train_loader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             outputs = self.model(inputs)
 

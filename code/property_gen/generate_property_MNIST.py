@@ -4,7 +4,7 @@ import argparse
 
 
 
-class GeneratePropertyScripts:
+class GeneratePropertyMNIST:
     def __init__(self, epsilon=0.01, job_index = 0):
         self.add_project_folder_to_pythonpath()
         self.epsilon = str(epsilon)
@@ -76,5 +76,5 @@ if __name__ == "__main__":
     parser.add_argument("--job", type=int, default=0, help="Job array")
     args = parser.parse_args()
 
-    gps = GeneratePropertyScripts(epsilon=args.epsilon, job_index=args.job)
+    gps = GeneratePropertyMNIST(epsilon=args.epsilon, job_index=args.job)
     gps.generate(index=args.index)

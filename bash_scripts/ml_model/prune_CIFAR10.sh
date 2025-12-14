@@ -15,7 +15,7 @@ pip install --no-index --upgrade pip
 
 pip install --no-index -r $HOME/requirements_main.txt
 
-PRUNE_VALUES=(20 40 60 70 75 80 85 90)
+PRUNE_VALUES=(10 20 30 40 50 60 70 80)
 SEED_VALUES=(10 20 30 40 50 60 70 80 90 100)
 
 NUM_J=${#SEED_VALUES[@]}
