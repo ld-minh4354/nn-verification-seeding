@@ -112,7 +112,7 @@ class PruneCIFAR10:
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
-            if test_accuracy >= 0.9:
+            if test_accuracy >= 0.89:
                 break
 
         for module, _ in self.parameters_to_prune:
