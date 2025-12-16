@@ -37,7 +37,7 @@ class ModelStatsMNIST:
     
     def process_data(self):
         os.makedirs("results", exist_ok=True)
-        self.df.to_csv(os.path.join("results", "model_stats_MNIST_all.csv"), index=False)
+        self.df.to_csv(os.path.join("results", "model_stats_MNIST.csv"), index=False)
 
         self.df = (
             self.df
