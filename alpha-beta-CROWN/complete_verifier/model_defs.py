@@ -19,7 +19,6 @@ from torch.nn import functional as F
 import torch.nn as nn
 from collections import OrderedDict
 import math
-from torchvision import models
 
 ########################################
 # Defined the model architectures
