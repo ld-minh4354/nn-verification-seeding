@@ -92,7 +92,7 @@ class TrainBaselineCIFAR10:
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
-            if test_accuracy >= 0.89:
+            if test_accuracy >= 0.88:
                 break
 
     
