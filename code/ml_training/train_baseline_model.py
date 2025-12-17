@@ -97,7 +97,7 @@ class TrainBaselineMNIST:
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
-            if test_accuracy >= 0.993:
+            if test_accuracy >= 0.994:
                 break
 
         

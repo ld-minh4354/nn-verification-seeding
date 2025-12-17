@@ -16,14 +16,14 @@ pip install --no-index --upgrade pip
 pip install --no-index -r $HOME/requirements_main.txt
 
 MODEL_VALUES=(0 1 2)
-SEED_VALUES=(10 20 30 40 50 60 70 80 90 100)
 PRUNE_VALUES=(10 20 30 40 50 60 70 80)
+SEED_VALUES=(10 20 30 40 50 60 70 80 90 100)
 
 TASK_ID=${SLURM_ARRAY_TASK_ID}
 
 MODEL=${MODEL_VALUES[$((TASK_ID / 80))]}
-SEED=${SEED_VALUES[$(((TASK_ID / 8) % 10))]}
-PRUNE=${PRUNE_VALUES[$((TASK_ID % 8))]}
+PRUNE=${PRUNE_VALUES[$(((TASK_ID / 10) % 8))]}
+SEED=${SEED_VALUES[$((TASK_ID % 10))]}
 
 echo "Prune model with model=$MODEL, seed=$SEED, prune ratio=$PRUNE %"
 
