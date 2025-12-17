@@ -1,26 +1,28 @@
 import os, sys
+from itertools import product
 
 import pandas as pd
 import numpy as np
 
 import torch
 import torch.nn as nn
-from torchvision import datasets, transforms, models
+from torchvision import datasets, transforms
 
-from resnet18_CIFAR10 import BasicBlock, ResNet18
+from model_architecture import resnet4, resnet5, resnet7
 
 
 
-class ModelStatsCIFAR10:
+class ModelStatsMNIST:
     def __init__(self):
         self.add_project_folder_to_pythonpath()
         self.device = torch.device("cuda")
 
-        self.model_type = ["baseline", "prune_0.1", "prune_0.2", "prune_0.3", "prune_0.4",
+        self.prune_type = ["baseline", "prune_0.1", "prune_0.2", "prune_0.3", "prune_0.4",
                            "prune_0.5", "prune_0.6", "prune_0.7", "prune_0.8"]
+        self.model_type = ["resnet4", "resnet5", "resnet7"]
         self.seed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
-        self.df = pd.DataFrame(columns=["model_type", "seed", "accuracy", "zero_weight_percentage"])
+        self.df = pd.DataFrame(columns=["prune_type", "model_type", "seed", "accuracy", "zero_weight_percentage"])
 
 
     def add_project_folder_to_pythonpath(self):
@@ -33,56 +35,61 @@ class ModelStatsCIFAR10:
         self.load_data()
         self.process_models()
         self.process_data()
-        
 
+    
     def process_data(self):
         os.makedirs("results", exist_ok=True)
-        self.df.to_csv(os.path.join("results", "model_stats_CIFAR10.csv"), index=False)
+        self.df.to_csv(os.path.join("results", "model_stats.csv"), index=False)
 
         self.df = (
             self.df
-            .groupby(["model_type"], as_index=False)
+            .groupby(["prune_type", "model_type"], as_index=False)
             .agg(accuracy_avg=("accuracy", "mean"),
                  accuracy_std=("accuracy", "std"))
         )
-        self.df.to_csv(os.path.join("results", "model_stats_CIFAR10_summary.csv"), index=False)
+        self.df.to_csv(os.path.join("results", "model_stats_summary.csv"), index=False)
+
 
     def load_data(self):
         self.num_classes = 10
 
         transform_test = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.4914, 0.4822, 0.4465],
-                std=[0.2023, 0.1994, 0.2010]
-            )
+            transforms.Normalize((0.1307,), (0.3081,))
         ])
 
         os.makedirs("raw_datasets", exist_ok=True)
-        test_dataset = datasets.CIFAR10(root="raw_datasets", train=False, download=False, transform=transform_test)
+        test_dataset = datasets.MNIST(root="raw_datasets", train=False, download=False, transform=transform_test)
         self.test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
 
 
     def process_models(self):
-        for model_type in self.model_type:
-            for seed in self.seed:
-                model = self.load_model(model_type, seed)
-                accuracy = self.test_loop(model)
-                percentage = self.zero_weights_percentage(model)
+        for prune_type, model_type, seed in product(self.prune_type, self.model_type, self.seed):
+            model = self.load_model(prune_type, model_type, seed)
+            accuracy = self.test_loop(model)
+            percentage = self.zero_weights_percentage(model)
 
-                self.df.loc[len(self.df)] = {
-                    "model_type": model_type,
-                    "seed": seed,
-                    "accuracy": accuracy,
-                    "zero_weight_percentage": percentage,
-                }
+            self.df.loc[len(self.df)] = {
+                "prune_type": prune_type,
+                "model_type": model_type,
+                "seed": seed,
+                "accuracy": accuracy,
+                "zero_weight_percentage": percentage,
+            }
 
 
-    def load_model(self, model_type, seed):
-        model = ResNet18(BasicBlock, [2, 2, 2, 2], in_planes=16)
+    def load_model(self, prune_type, model_type, seed):
+        if model_type == "resnet4":
+            model = resnet4()
+        elif model_type == "resnet5":
+            model = resnet5()
+        elif model_type == "resnet7":
+            model = resnet7()
+        
         model = model.to(self.device)
 
-        state_dict = torch.load(os.path.join("models", "CIFAR10", model_type, f"resnet18-CIFAR10-{seed}.pth"), 
+        state_dict = torch.load(os.path.join("models", prune_type, model_type,
+                                             f"{model_type}-{prune_type}-{seed}.pth"), 
                                 map_location=self.device)
         model.load_state_dict(state_dict)
 
@@ -121,5 +128,5 @@ class ModelStatsCIFAR10:
 
 
 if __name__ == "__main__":
-    stats = ModelStatsCIFAR10()
+    stats = ModelStatsMNIST()
     stats.main()
