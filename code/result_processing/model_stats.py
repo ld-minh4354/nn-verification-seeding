@@ -22,7 +22,7 @@ class ModelStatsMNIST:
         self.model_type = ["resnet4", "resnet6", "resnet8"]
         self.seed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
-        self.df = pd.DataFrame(columns=["prune_type", "model_type", "seed", "accuracy", "zero_weight_percentage"])
+        self.df = pd.DataFrame(columns=["model_type", "prune_type", "seed", "accuracy", "zero_weight_percentage"])
 
 
     def add_project_folder_to_pythonpath(self):
@@ -43,7 +43,7 @@ class ModelStatsMNIST:
 
         self.df = (
             self.df
-            .groupby(["prune_type", "model_type"], as_index=False)
+            .groupby(["model_type", "prune_type"], as_index=False)
             .agg(accuracy_avg=("accuracy", "mean"),
                  accuracy_std=("accuracy", "std"))
         )
@@ -70,8 +70,8 @@ class ModelStatsMNIST:
             percentage = self.zero_weights_percentage(model)
 
             self.df.loc[len(self.df)] = {
-                "prune_type": prune_type,
                 "model_type": model_type,
+                "prune_type": prune_type,
                 "seed": seed,
                 "accuracy": accuracy,
                 "zero_weight_percentage": percentage,
