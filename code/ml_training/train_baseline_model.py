@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 
-from model_architecture import resnet4, resnet5, resnet7
+from model_architecture import ResNet4, ResNet6, ResNet8
     
 
 
@@ -21,14 +21,14 @@ class TrainBaselineMNIST:
         self.set_seed(seed)
 
         if model == 0:
-            self.model = resnet4()
+            self.model = ResNet4()
             self.model_type = "resnet4"
         elif model == 1:
-            self.model = resnet5()
-            self.model_type = "resnet5"
+            self.model = ResNet6()
+            self.model_type = "resnet6"
         elif model == 2:
-            self.model = resnet7()
-            self.model_type = "resnet7"
+            self.model = ResNet8()
+            self.model_type = "resnet8"
         else:
             raise ValueError("Model args passed in is not 0, 1 or 2")
         

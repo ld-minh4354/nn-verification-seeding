@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 
-from model_architecture import resnet4, resnet5, resnet7
+from model_architecture import ResNet4, ResNet6, ResNet8
 
 
 
@@ -19,7 +19,7 @@ class ModelStatsMNIST:
 
         self.prune_type = ["baseline", "prune_0.1", "prune_0.2", "prune_0.3", "prune_0.4",
                            "prune_0.5", "prune_0.6", "prune_0.7", "prune_0.8"]
-        self.model_type = ["resnet4", "resnet5", "resnet7"]
+        self.model_type = ["resnet4", "resnet6", "resnet8"]
         self.seed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
         self.df = pd.DataFrame(columns=["prune_type", "model_type", "seed", "accuracy", "zero_weight_percentage"])
@@ -80,11 +80,11 @@ class ModelStatsMNIST:
 
     def load_model(self, prune_type, model_type, seed):
         if model_type == "resnet4":
-            model = resnet4()
-        elif model_type == "resnet5":
-            model = resnet5()
-        elif model_type == "resnet7":
-            model = resnet7()
+            model = ResNet4()
+        elif model_type == "resnet6":
+            model = ResNet6()
+        elif model_type == "resnet8":
+            model = ResNet8()
         
         model = model.to(self.device)
 

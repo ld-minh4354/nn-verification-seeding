@@ -25,14 +25,14 @@ import math
 ########################################
 
 
-def resnet4():
+def resnet():
     return ResNet4()
 
-def resnet5():
-    return CResNet5(BasicBlock, num_blocks=2, in_planes=8, bn=False, last_layer="dense")
+def cnn():
+    return mnist_conv_big()
 
-def resnet7():
-    return CResNet7(BasicBlock, num_blocks=2, in_planes=16, bn=False, last_layer="dense")
+def madry():
+    return mnist_madry_secret()
 
 
 class ResidualBlock(nn.Module):
