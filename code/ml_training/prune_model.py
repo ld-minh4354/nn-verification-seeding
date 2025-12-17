@@ -6,18 +6,36 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+from torch.nn.utils import prune
 from torchvision import datasets, transforms
 
-from resnet4_MNIST import ResNet4
-    
+from model_architecture import resnet4, resnet5, resnet7
 
 
-class TrainBaselineMNIST:
-    def __init__(self, seed = 10):
+
+class PruneMNIST:
+    def __init__(self, model, seed, prune_rate):
         self.add_project_folder_to_pythonpath()
+        self.device = torch.device("cuda")
+
         self.seed = seed
         self.set_seed(seed)
-        self.device = torch.device("cuda")
+
+        self.prune_rate = prune_rate
+
+        if model == 0:
+            self.model = resnet4()
+            self.model_type = "resnet4"
+        elif model == 1:
+            self.model = resnet5()
+            self.model_type = "resnet5"
+        elif model == 2:
+            self.model = resnet7()
+            self.model_type = "resnet7"
+        else:
+            raise ValueError("Model args passed in is not 0, 1 or 2")
+        
+        self.model = self.model.to(self.device)
 
 
     def add_project_folder_to_pythonpath(self):
@@ -37,9 +55,22 @@ class TrainBaselineMNIST:
 
     def main(self):
         self.load_data()
+        self.load_model()
         self.set_hyperparameters()
         self.training()
         self.save_model()
+
+
+    def count_zero_weights(self):
+        nonzero = 0
+        total = 0
+        for _, param in self.model.named_parameters():
+            tensor = param.data
+            nz = torch.count_nonzero(tensor)
+            nonzero += nz
+            total += tensor.numel()
+
+        print(f"Non-zero weights: {nonzero}/{total}")
 
 
     def load_data(self):
@@ -63,6 +94,25 @@ class TrainBaselineMNIST:
         self.train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
         self.test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
 
+    
+    def load_model(self):
+        state_dict = torch.load(os.path.join("models", "baseline", self.model_type, f"{self.model_type}-baseline-{self.seed}.pth"), 
+                                map_location=self.device)
+        self.model.load_state_dict(state_dict)
+
+        self.count_zero_weights()
+
+        self.parameters_to_prune = []
+        for _, module in self.model.named_modules():
+            if isinstance(module, nn.Conv2d):
+                self.parameters_to_prune.append((module, 'weight'))
+
+        prune.global_unstructured(
+            self.parameters_to_prune,
+            pruning_method=prune.L1Unstructured,
+            amount=self.prune_rate,
+        )
+
 
     def set_hyperparameters(self):
         self.EPOCH = 100
@@ -73,25 +123,27 @@ class TrainBaselineMNIST:
 
 
     def training(self):
-        self.model = ResNet4()
-        self.model = self.model.to(self.device)
-
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.STEP_SIZE, gamma=self.GAMMA)
 
         self.criterion = nn.CrossEntropyLoss()
 
-        print(f"Start training ResNet4 for MNIST under seed {self.seed}\n")
+        print(f"Pruning {self.model_type} model with seed {self.seed} under pruning ratio {self.prune_rate}\n")
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
             if test_accuracy >= 0.993:
                 break
 
-        
+        for module, _ in self.parameters_to_prune:
+            prune.remove(module, 'weight')
+
+        self.count_zero_weights()
+
+
     def save_model(self):
-        os.makedirs(os.path.join("models", "MNIST", "baseline"), exist_ok=True)
-        torch.save(self.model.state_dict(), os.path.join("models", "MNIST", "baseline", f"resnet4-MNIST-{self.seed}.pth"))
+        os.makedirs(os.path.join("models", f"prune_{self.prune_rate}", self.model_type), exist_ok=True)
+        torch.save(self.model.state_dict(), os.path.join("models", f"prune_{self.prune_rate}", self.model_type, f"{self.model_type}-prune_{self.prune_rate}-{self.seed}.pth"))
 
 
     def train_loop(self, epoch):
@@ -144,8 +196,10 @@ class TrainBaselineMNIST:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=10, help="Random seed for training")
+    parser.add_argument("--model", type=int)
+    parser.add_argument("--seed", type=int)
+    parser.add_argument("--prune", type=int)
     args = parser.parse_args()
 
-    training = TrainBaselineMNIST(seed=args.seed)
-    training.main()
+    pruning = PruneMNIST(model=args.model, seed=args.seed, prune_rate=args.prune / 100)
+    pruning.main()

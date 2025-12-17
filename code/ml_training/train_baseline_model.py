@@ -8,16 +8,31 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 
-from resnet18_CIFAR10 import BasicBlock, ResNet18
+from model_architecture import resnet4, resnet5, resnet7
+    
 
 
-
-class TrainBaselineCIFAR10:
-    def __init__(self, seed = 10):
+class TrainBaselineMNIST:
+    def __init__(self, model, seed):
         self.add_project_folder_to_pythonpath()
+        self.device = torch.device("cuda")
+
         self.seed = seed
         self.set_seed(seed)
-        self.device = torch.device("cuda")
+
+        if model == 0:
+            self.model = resnet4()
+            self.model_type = "resnet4"
+        elif model == 1:
+            self.model = resnet5()
+            self.model_type = "resnet5"
+        elif model == 2:
+            self.model = resnet7()
+            self.model_type = "resnet7"
+        else:
+            raise ValueError("Model args passed in is not 0, 1 or 2")
+        
+        self.model = self.model.to(self.device)
 
 
     def add_project_folder_to_pythonpath(self):
@@ -46,26 +61,19 @@ class TrainBaselineCIFAR10:
         self.num_classes = 10
 
         transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(10),
             transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.4914, 0.4822, 0.4465],
-                std=[0.2023, 0.1994, 0.2010]
-            )
+            transforms.Normalize((0.1307,), (0.3081,))
         ])
 
         transform_test = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.4914, 0.4822, 0.4465],
-                std=[0.2023, 0.1994, 0.2010]
-            )
+            transforms.Normalize((0.1307,), (0.3081,))
         ])
 
         os.makedirs("raw_datasets", exist_ok=True)
-        train_dataset = datasets.CIFAR10(root="raw_datasets", train=True, download=False, transform=transform_train)
-        test_dataset = datasets.CIFAR10(root="raw_datasets", train=False, download=False, transform=transform_test)
+        train_dataset = datasets.MNIST(root="raw_datasets", train=True, download=False, transform=transform_train)
+        test_dataset = datasets.MNIST(root="raw_datasets", train=False, download=False, transform=transform_test)
 
         self.train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
         self.test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
@@ -80,25 +88,22 @@ class TrainBaselineCIFAR10:
 
 
     def training(self):
-        self.model = ResNet18(BasicBlock, [2, 2, 2, 2], in_planes=16)
-        self.model = self.model.to(self.device)
-
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.STEP_SIZE, gamma=self.GAMMA)
 
         self.criterion = nn.CrossEntropyLoss()
 
-        print(f"Start training ResNet18 for CIFAR10 under seed {self.seed}\n")
+        print(f"Start training {self.model_type} under seed {self.seed}\n")
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
-            if test_accuracy >= 0.88:
+            if test_accuracy >= 0.993:
                 break
 
-    
+        
     def save_model(self):
-        os.makedirs(os.path.join("models", "CIFAR10", "baseline"), exist_ok=True)
-        torch.save(self.model.state_dict(), os.path.join("models", "CIFAR10", "baseline", f"resnet18-CIFAR10-{self.seed}.pth"))
+        os.makedirs(os.path.join("models", "baseline", self.model_type), exist_ok=True)
+        torch.save(self.model.state_dict(), os.path.join("models", "baseline", self.model_type, f"{self.model_type}-baseline-{self.seed}.pth"))
 
 
     def train_loop(self, epoch):
@@ -151,8 +156,9 @@ class TrainBaselineCIFAR10:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=10, help="Random seed for training")
+    parser.add_argument("--model", type=int)
+    parser.add_argument("--seed", type=int)
     args = parser.parse_args()
 
-    training = TrainBaselineCIFAR10(seed=args.seed)
+    training = TrainBaselineMNIST(model=args.model, seed=args.seed)
     training.main()
