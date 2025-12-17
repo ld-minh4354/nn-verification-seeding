@@ -25,12 +25,14 @@ import math
 ########################################
 
 
-def eml_mnist():
+def resnet4():
     return ResNet4()
 
+def resnet5():
+    return CResNet5(BasicBlock, num_blocks=2, in_planes=8, bn=False, last_layer="dense")
 
-def eml_cifar10():
-    return ResNet(BasicBlock, [2, 2, 2, 2], in_planes=16)
+def resnet7():
+    return CResNet7(BasicBlock, num_blocks=2, in_planes=16, bn=False, last_layer="dense")
 
 
 class ResidualBlock(nn.Module):
