@@ -23,12 +23,15 @@ class TrainBaselineMNIST:
         if model == 0:
             self.model = ResNet4()
             self.model_type = "resnet4"
+            self.min_accuracy = 0.994
         elif model == 1:
             self.model = ResNet6()
             self.model_type = "resnet6"
+            self.min_accuracy = 0.996
         elif model == 2:
             self.model = ResNet8()
             self.model_type = "resnet8"
+            self.min_accuracy = 0.996
         else:
             raise ValueError("Model args passed in is not 0, 1 or 2")
         
@@ -97,7 +100,7 @@ class TrainBaselineMNIST:
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
-            if test_accuracy >= 0.994:
+            if test_accuracy >= self.min_accuracy:
                 break
 
         
