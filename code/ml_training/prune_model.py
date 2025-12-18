@@ -30,7 +30,7 @@ class PruneMNIST:
         elif model == 1:
             self.model = ResNet6()
             self.model_type = "resnet6"
-            self.min_accuracy = 0.995
+            self.min_accuracy = 0.996
         elif model == 2:
             self.model = ResNet8()
             self.model_type = "resnet8"
