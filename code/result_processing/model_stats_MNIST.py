@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 
-from model_architecture import ResNet4, ResNet6, ResNet8
+from model_architecture_all import ResNet4
 
 
 
@@ -17,12 +17,11 @@ class ModelStatsMNIST:
         self.add_project_folder_to_pythonpath()
         self.device = torch.device("cuda")
 
-        self.prune_type = ["baseline", "prune_0.1", "prune_0.2", "prune_0.3", "prune_0.4",
-                           "prune_0.5", "prune_0.6", "prune_0.7", "prune_0.8"]
-        self.model_type = ["resnet4", "resnet6", "resnet8"]
+        self.prune_type = ["baseline", "prune0.1", "prune0.2", "prune0.3", "prune0.4",
+                           "prune0.5", "prune0.6", "prune0.7", "prune0.8"]
         self.seed = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
-        self.df = pd.DataFrame(columns=["model_type", "prune_type", "seed", "accuracy", "zero_weight_percentage"])
+        self.df = pd.DataFrame(columns=["prune_type", "seed", "accuracy", "zero_weight_percentage"])
 
 
     def add_project_folder_to_pythonpath(self):
@@ -39,15 +38,15 @@ class ModelStatsMNIST:
     
     def process_data(self):
         os.makedirs("results", exist_ok=True)
-        self.df.to_csv(os.path.join("results", "model_stats.csv"), index=False)
+        self.df.to_csv(os.path.join("results", "MNIST_model_stats.csv"), index=False)
 
         self.df = (
             self.df
-            .groupby(["model_type", "prune_type"], as_index=False)
+            .groupby(["prune_type"], as_index=False)
             .agg(accuracy_avg=("accuracy", "mean"),
                  accuracy_std=("accuracy", "std"))
         )
-        self.df.to_csv(os.path.join("results", "model_stats_summary.csv"), index=False)
+        self.df.to_csv(os.path.join("results", "MNIST_model_stats_summary.csv"), index=False)
 
 
     def load_data(self):
@@ -64,13 +63,12 @@ class ModelStatsMNIST:
 
 
     def process_models(self):
-        for prune_type, model_type, seed in product(self.prune_type, self.model_type, self.seed):
-            model = self.load_model(prune_type, model_type, seed)
+        for prune_type, seed in product(self.prune_type, self.seed):
+            model = self.load_model(prune_type, seed)
             accuracy = self.test_loop(model)
             percentage = self.zero_weights_percentage(model)
 
             self.df.loc[len(self.df)] = {
-                "model_type": model_type,
                 "prune_type": prune_type,
                 "seed": seed,
                 "accuracy": accuracy,
@@ -78,18 +76,12 @@ class ModelStatsMNIST:
             }
 
 
-    def load_model(self, prune_type, model_type, seed):
-        if model_type == "resnet4":
-            model = ResNet4()
-        elif model_type == "resnet6":
-            model = ResNet6()
-        elif model_type == "resnet8":
-            model = ResNet8()
-        
+    def load_model(self, prune_type, seed):
+        model = ResNet4()
         model = model.to(self.device)
 
-        state_dict = torch.load(os.path.join("models", prune_type, model_type,
-                                             f"{model_type}-{prune_type}-{seed}.pth"), 
+        state_dict = torch.load(os.path.join("models", "MNIST", prune_type,
+                                             f"MNIST_{prune_type}_{seed}.pth"), 
                                 map_location=self.device)
         model.load_state_dict(state_dict)
 

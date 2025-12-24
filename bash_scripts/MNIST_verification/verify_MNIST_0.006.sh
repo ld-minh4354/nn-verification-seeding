@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=verify_resnet4_0.006
+#SBATCH --job-name=verify_MNIST_0.006
 #SBATCH --gpus=nvidia_h100_80gb_hbm3_2g.20gb:1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=61G
 #SBATCH --time=3:00:00
 #SBATCH --array=0-449
-#SBATCH --output=logs/resnet4_0.006_%a.out
+#SBATCH --output=logs/verify_MNIST_0.006_%a.out
 
 module load StdEnv/2023
 module load python/3.11
