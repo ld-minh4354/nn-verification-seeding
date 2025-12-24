@@ -21,6 +21,8 @@ class PruneMNIST:
         self.seed = seed
         self.set_seed(seed)
 
+        self.prune_rate = prune_rate
+
 
     def add_project_folder_to_pythonpath(self):
         project_path = os.path.abspath("")
@@ -80,6 +82,9 @@ class PruneMNIST:
 
     
     def load_model(self):
+        self.model = ResNet4()
+        self.model = self.model.to(self.device)
+        
         state_dict = torch.load(os.path.join("models", "MNIST", "baseline",
                                              f"MNIST_baseline_{self.seed}.pth"), 
                                 map_location=self.device)
@@ -108,9 +113,6 @@ class PruneMNIST:
 
 
     def training(self):
-        self.model = ResNet4()
-        self.model = self.model.to(self.device)
-
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.STEP_SIZE, gamma=self.GAMMA)
 
@@ -120,7 +122,7 @@ class PruneMNIST:
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
-            if test_accuracy >= self.min_accuracy:
+            if test_accuracy >= 0.994:
                 break
 
         for module, _ in self.parameters_to_prune:
@@ -185,10 +187,9 @@ class PruneMNIST:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=int)
     parser.add_argument("--seed", type=int)
     parser.add_argument("--prune", type=int)
     args = parser.parse_args()
 
-    pruning = PruneMNIST(model=args.model, seed=args.seed, prune_rate=args.prune / 100)
+    pruning = PruneMNIST(seed=args.seed, prune_rate=args.prune / 100)
     pruning.main()
