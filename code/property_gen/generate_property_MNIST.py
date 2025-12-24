@@ -5,21 +5,14 @@ import argparse
 
 
 class GeneratePropertyMNIST:
-    def __init__(self, model, epsilon, job_index):
+    def __init__(self, epsilon, job_index):
         self.add_project_folder_to_pythonpath()
         self.epsilon = str(epsilon)
         self.job_index = job_index
 
-        if model == 0:
-            self.model_type = "resnet4"
-        elif model == 1:
-            self.model_type = "resnet6"
-        elif model == 2:
-            self.model_type = "resnet8"
-
         self.prune_types = ["baseline",
-                            "prune_0.1", "prune_0.2", "prune_0.3", "prune_0.4",
-                            "prune_0.5", "prune_0.6", "prune_0.7", "prune_0.8"]
+                            "prune0.1", "prune0.2", "prune0.3", "prune0.4",
+                            "prune0.5", "prune0.6", "prune0.7", "prune0.8"]
         self.seed_values = list(range(10, 101, 10))
         self.property_values = list(range(100))
         
@@ -44,13 +37,13 @@ class GeneratePropertyMNIST:
         self.print_info(prune, seed, property)
         file_content = self.get_file_content(prune, seed, property)
 
-        file_path = os.path.join("properties", f"current_{self.epsilon}_{self.job_index}.yaml")
+        file_path = os.path.join("properties", f"MNIST_{self.epsilon}_{self.job_index}.yaml")
         with open(file_path, "w") as f:
             f.write(file_content)
 
 
     def print_info(self, prune, seed, property):
-        print(f"MODEL: {self.model_type}")
+        print(f"DATASET: MNIST")
         print(f"PRUNING: {prune}")
         print(f"SEED: {seed}")
         print(f"PROPERTY: {property}")
@@ -61,8 +54,8 @@ class GeneratePropertyMNIST:
     def get_file_content(self, prune, seed, property):
         return textwrap.dedent(f"""\
             model:
-                name: {self.model_type}
-                path: models/{prune}/{self.model_type}/{self.model_type}-{prune}-{seed}.pth
+                name: resnet4
+                path: models/MNIST/{prune}/MNIST_{prune}_{seed}.pth
             data:
                 dataset: MNIST
                 mean: [0.1307]
@@ -78,11 +71,10 @@ class GeneratePropertyMNIST:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=int)
     parser.add_argument("--epsilon", type=float)
     parser.add_argument("--index", type=int)
     parser.add_argument("--job", type=int)
     args = parser.parse_args()
 
-    gps = GeneratePropertyMNIST(model=args.model, epsilon=args.epsilon, job_index=args.job)
+    gps = GeneratePropertyMNIST(epsilon=args.epsilon, job_index=args.job)
     gps.generate(index=args.index)
