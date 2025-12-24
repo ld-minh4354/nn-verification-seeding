@@ -23,4 +23,4 @@ SEED=${SEED_VALUES[$((TASK_ID))]}
 
 echo "Train MNIST baseline model with seed=$SEED"
 
-srun python code/ml_training/train_baseline_model.py --seed $SEED
+srun python code/MNIST/train_baseline_model.py --seed $SEED

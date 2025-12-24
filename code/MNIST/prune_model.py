@@ -14,31 +14,12 @@ from model_architecture import ResNet4
 
 
 class PruneMNIST:
-    def __init__(self, model, seed, prune_rate):
+    def __init__(self, seed, prune_rate):
         self.add_project_folder_to_pythonpath()
         self.device = torch.device("cuda")
 
         self.seed = seed
         self.set_seed(seed)
-
-        self.prune_rate = prune_rate
-
-        if model == 0:
-            self.model = ResNet4()
-            self.model_type = "resnet4"
-            self.min_accuracy = 0.994
-        elif model == 1:
-            self.model = ResNet6()
-            self.model_type = "resnet6"
-            self.min_accuracy = 0.996
-        elif model == 2:
-            self.model = ResNet8()
-            self.model_type = "resnet8"
-            self.min_accuracy = 0.996
-        else:
-            raise ValueError("Model args passed in is not 0, 1 or 2")
-        
-        self.model = self.model.to(self.device)
 
 
     def add_project_folder_to_pythonpath(self):
@@ -99,7 +80,8 @@ class PruneMNIST:
 
     
     def load_model(self):
-        state_dict = torch.load(os.path.join("models", "baseline", self.model_type, f"{self.model_type}-baseline-{self.seed}.pth"), 
+        state_dict = torch.load(os.path.join("models", "MNIST", "baseline",
+                                             f"MNIST_baseline_{self.seed}.pth"), 
                                 map_location=self.device)
         self.model.load_state_dict(state_dict)
 
@@ -126,12 +108,15 @@ class PruneMNIST:
 
 
     def training(self):
+        self.model = ResNet4()
+        self.model = self.model.to(self.device)
+
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.STEP_SIZE, gamma=self.GAMMA)
 
         self.criterion = nn.CrossEntropyLoss()
 
-        print(f"Pruning {self.model_type} model with seed {self.seed} under pruning ratio {self.prune_rate}\n")
+        print(f"Pruning MNIST model with seed {self.seed} under pruning ratio {self.prune_rate}\n")
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
@@ -145,8 +130,9 @@ class PruneMNIST:
 
 
     def save_model(self):
-        os.makedirs(os.path.join("models", f"prune_{self.prune_rate}", self.model_type), exist_ok=True)
-        torch.save(self.model.state_dict(), os.path.join("models", f"prune_{self.prune_rate}", self.model_type, f"{self.model_type}-prune_{self.prune_rate}-{self.seed}.pth"))
+        os.makedirs(os.path.join("models", "MNIST", f"prune{self.prune_rate}"), exist_ok=True)
+        torch.save(self.model.state_dict(), os.path.join("models", "MNIST", f"prune{self.prune_rate}",
+                                                         f"MNIST_prune{self.prune_rate}_{self.seed}.pth"))
 
 
     def train_loop(self, epoch):
