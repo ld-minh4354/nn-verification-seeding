@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=raw_result
+#SBATCH --job-name=final_result
 #SBATCH --cpus-per-task=8
 #SBATCH --time=0:20:00
 #SBATCH --output=logs/final_result.out
