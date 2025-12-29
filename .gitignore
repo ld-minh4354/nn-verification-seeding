@@ -1,2 +1,4 @@
 .venv/
 models/
+raw_datasets/JPL
+raw_datasets/JPL_processed
