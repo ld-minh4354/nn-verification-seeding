@@ -71,7 +71,7 @@ class TrainBaselineJPL:
 
     def set_hyperparameters(self):
         self.EPOCH = 200
-        self.LR = 1e-3
+        self.LR = 1e-4
         self.WEIGHT_DECAY = 1e-4
         self.STEP_SIZE = 30
         self.GAMMA = 0.1
