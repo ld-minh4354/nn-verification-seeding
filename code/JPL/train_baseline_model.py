@@ -74,7 +74,7 @@ class TrainBaselineJPL:
         self.LR = 1e-4
         self.WEIGHT_DECAY = 1e-4
         self.STEP_SIZE = 30
-        self.GAMMA = 0.1
+        self.GAMMA = 0.3
 
 
     def training(self):
