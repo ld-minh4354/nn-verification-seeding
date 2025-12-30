@@ -120,7 +120,7 @@ class TrainBaselineJPL:
         test_loss, test_accuracy = self.test_loop()
 
         self.scheduler.step()
-        print(f"Epoch [{epoch+1:3d}] | Train Loss: {total_loss:.4f} | Test Loss: {test_loss:.4f} | Test Accuracy: {test_accuracy:.4f}")
+        print(f"Epoch [{epoch+1:3d}] | Train Loss: {total_loss:.4f} | Test Loss: {test_loss:.4f} | Test Accuracy: {test_accuracy:.4f}", flush=True)
 
         return test_accuracy
     
