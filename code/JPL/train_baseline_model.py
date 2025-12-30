@@ -47,12 +47,14 @@ class TrainBaselineJPL:
         self.num_classes = 2
 
         transform_train = transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
             transforms.RandomRotation(10),
             transforms.ToTensor(),
             transforms.Normalize((0.3989,), (0.1828,))
         ])
 
         transform_test = transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
             transforms.ToTensor(),
             transforms.Normalize((0.3989,), (0.1828,))
         ])
