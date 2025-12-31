@@ -6,11 +6,11 @@ import pandas as pd
 import torch
 from torchvision import datasets, transforms
 
-from model_architecture_MNIST import ResNet4
+from model_architecture_JPL import ResNet4
 
 
 
-class ModelStatsMNIST:
+class ModelStatsJPL:
     def __init__(self):
         self.add_project_folder_to_pythonpath()
         self.device = torch.device("cuda")
@@ -36,7 +36,7 @@ class ModelStatsMNIST:
     
     def process_data(self):
         os.makedirs("results", exist_ok=True)
-        self.df.to_csv(os.path.join("results", "MNIST_model_stats.csv"), index=False)
+        self.df.to_csv(os.path.join("results", "JPL_model_stats.csv"), index=False)
 
         self.df = (
             self.df
@@ -44,19 +44,20 @@ class ModelStatsMNIST:
             .agg(accuracy_avg=("accuracy", "mean"),
                  accuracy_std=("accuracy", "std"))
         )
-        self.df.to_csv(os.path.join("results", "MNIST_model_stats_summary.csv"), index=False)
+        self.df.to_csv(os.path.join("results", "JPL_model_stats_summary.csv"), index=False)
 
 
     def load_data(self):
-        self.num_classes = 10
+        self.num_classes = 2
 
         transform_test = transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
             transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
+            transforms.Normalize((0.3989,), (0.1828,))
         ])
 
-        os.makedirs("raw_datasets", exist_ok=True)
-        test_dataset = datasets.MNIST(root="raw_datasets", train=False, download=False, transform=transform_test)
+        test_dir = os.path.join("raw_datasets", "JPL_processed", "test")
+        test_dataset = datasets.ImageFolder(root=test_dir, transform=transform_test)
         self.test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
 
 
@@ -78,8 +79,8 @@ class ModelStatsMNIST:
         model = ResNet4()
         model = model.to(self.device)
 
-        state_dict = torch.load(os.path.join("models", "MNIST", prune_type,
-                                             f"MNIST_{prune_type}_{seed}.pth"), 
+        state_dict = torch.load(os.path.join("models", "JPL", prune_type,
+                                             f"JPL_{prune_type}_{seed}.pth"), 
                                 map_location=self.device)
         model.load_state_dict(state_dict)
 
@@ -118,5 +119,5 @@ class ModelStatsMNIST:
 
 
 if __name__ == "__main__":
-    stats = ModelStatsMNIST()
+    stats = ModelStatsJPL()
     stats.main()
