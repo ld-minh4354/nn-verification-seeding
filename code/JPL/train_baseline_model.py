@@ -70,8 +70,8 @@ class TrainBaselineJPL:
 
 
     def set_hyperparameters(self):
-        self.EPOCH = 200
-        self.LR = 3e-5
+        self.EPOCH = 100
+        self.LR = 1e-4
         self.WEIGHT_DECAY = 1e-4
         self.STEP_SIZE = 30
         self.GAMMA = 0.3
@@ -90,7 +90,7 @@ class TrainBaselineJPL:
 
         for epoch in range(self.EPOCH):
             test_accuracy = self.train_loop(epoch)
-            if test_accuracy >= 0.994:
+            if test_accuracy >= 0.84:
                 break
 
         
