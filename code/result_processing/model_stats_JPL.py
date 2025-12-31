@@ -63,9 +63,13 @@ class ModelStatsJPL:
 
     def process_models(self):
         for prune_type, seed in product(self.prune_type, self.seed):
-            model = self.load_model(prune_type, seed)
-            accuracy = self.test_loop(model)
-            percentage = self.zero_weights_percentage(model)
+            try:
+                model = self.load_model(prune_type, seed)
+                accuracy = self.test_loop(model)
+                percentage = self.zero_weights_percentage(model)
+            except Exception:
+                accuracy = 0
+                percentage = 0
 
             self.df.loc[len(self.df)] = {
                 "prune_type": prune_type,
