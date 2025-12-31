@@ -3,7 +3,7 @@
 #SBATCH --gpus-per-node=h100:1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=3G
-#SBATCH --time=00:40:00
+#SBATCH --time=01:00:00
 #SBATCH --array=0-9
 #SBATCH --output=logs_training/JPL_train_baseline_model_%a.out
 
