@@ -3,7 +3,7 @@
 #SBATCH --gpus-per-node=h100:1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=3G
-#SBATCH --time=2:00:00
+#SBATCH --time=0:30:00
 #SBATCH --output=logs/model_stats_JPL.out
 
 module load StdEnv/2023
