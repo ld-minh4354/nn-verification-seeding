@@ -54,7 +54,7 @@ class GeneratePropertyJPL:
     def get_file_content(self, prune, seed, property):
         return textwrap.dedent(f"""\
             model:
-                name: resnet4
+                name: resnet4jpl
                 path: models/JPL/{prune}/JPL_{prune}_{seed}.pth
             data:
                 dataset: Customized("custom_model_data", "jpl")
