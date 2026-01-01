@@ -185,3 +185,32 @@ def simple_cifar10(spec):
     # Rescale epsilon.
     ret_eps = torch.reshape(eps / std, (1, -1, 1, 1))
     return X, labels, data_max, data_min, ret_eps
+
+def jpl(spec):
+    eps = spec["epsilon"]
+    assert eps is not None
+
+    test_dir = os.path.join("raw_datasets", "JPL_processed", "test")
+    # You can access the mean and std stored in config file.
+    mean = torch.tensor(arguments.Config["data"]["mean"])
+    std = torch.tensor(arguments.Config["data"]["std"])
+
+    transform_test = transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std)
+        ])
+    
+    test_dataset = datasets.ImageFolder(root=test_dir, transform=transform_test)
+    # Load entire dataset.
+    testloader = torch.utils.data.DataLoader(test_dataset,\
+            batch_size=10000, shuffle=False, num_workers=4)
+    X, labels = next(iter(testloader))
+    # Set data_max and data_min to be None if no clip. For CIFAR-10 we clip to [0,1].
+    data_max = torch.reshape((1. - mean) / std, (1, -1, 1, 1))
+    data_min = torch.reshape((0. - mean) / std, (1, -1, 1, 1))
+    if eps is None:
+        raise ValueError('You must specify an epsilon')
+    # Rescale epsilon.
+    ret_eps = torch.reshape(eps / std, (1, -1, 1, 1))
+    return X, labels, data_max, data_min, ret_eps
