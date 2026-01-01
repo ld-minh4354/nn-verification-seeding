@@ -58,6 +58,7 @@ class GeneratePropertyJPL:
                 path: models/JPL/{prune}/JPL_{prune}_{seed}.pth
             data:
                 dataset: Customized("custom_model_data", "jpl")
+                num_outputs: 2
                 mean: [0.3989]
                 std:  [0.1828]
                 start: {property}
