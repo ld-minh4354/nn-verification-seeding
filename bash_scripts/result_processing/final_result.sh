@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=final_result
 #SBATCH --cpus-per-task=8
-#SBATCH --time=01:00:00
+#SBATCH --time=0:10:00
 #SBATCH --output=logs/final_result.out
 
 module load StdEnv/2023
