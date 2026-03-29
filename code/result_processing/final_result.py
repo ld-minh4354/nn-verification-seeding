@@ -157,48 +157,62 @@ class FinalResult:
         points_zoom = df['accuracy'].tolist()
         points_comp = df['result'].tolist()
 
-        fig = plt.figure(figsize=(10, 8))
+        # 1. Tighter figure height
+        fig = plt.figure(figsize=(12, 3.5))
 
-        # 3x3 grid: Top row has Fig 2 on the far right (1/3 width)
-        # Middle and Bottom rows have Fig 1 and Fig 3 spanning full width
-        gs = fig.add_gridspec(3, 3, hspace=0.6, wspace=0.1)
+        # 2. REDUCED hspace (vertical) and wspace (horizontal)
+        # hspace=0.4 (down from 1.2) and wspace=0.3 (down from 0.6)
+        gs = fig.add_gridspec(2, 2, width_ratios=[3, 1], hspace=0.4, wspace=0.2)
 
-        ax2 = fig.add_subplot(gs[0, 2])    # Top Right (Zoom)
-        ax1 = fig.add_subplot(gs[1, :])    # Middle (Original)
-        ax3 = fig.add_subplot(gs[2, :])    # Bottom (Comparison)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax3 = fig.add_subplot(gs[1, 0])
+        ax2 = fig.add_subplot(gs[0, 1])
 
-        def style_boxed_axis(ax, data, xlim, title, color='royalblue'):
-            ax.scatter(data, [0] * len(data), color=color, s=40, zorder=5)
+        def style_boxed_axis(ax, data, xlim, title, color='royalblue', title_pos='left'):
+            ax.scatter(data, [0]*len(data), color=color, s=30, zorder=5)
             ax.axhline(0, color='black', linewidth=0.8, alpha=0.3)
             ax.set_xlim(xlim)
-            ax.set_ylim(-0.5, 0.5)
+            ax.set_ylim(-0.1, 0.1) # Slim Y-axis
             ax.set_yticks([])
-            ax.set_title(title, fontsize=9, fontweight='bold')
+            
+            if title_pos == 'left':
+                # Reduced labelpad to keep title closer to the box
+                ax.set_ylabel(title, fontsize=9, fontweight='bold', rotation=0, 
+                            labelpad=20, va='center', ha='right')
+            else:
+                # Reduced pad for top title
+                ax.set_title(title, fontsize=9, fontweight='bold', pad=5)
+            
             for spine in ax.spines.values():
                 spine.set_visible(True)
 
-        # 1. Plot the data
-        style_boxed_axis(ax1, points_zoom, (0, 100), "MNIST Models - Accuracy")
-        style_boxed_axis(ax3, points_comp, (0, 100), "MNIST Models - Certified Robustness", color='orange')
+        # Plotting
+        style_boxed_axis(ax1, points_zoom, (0, 100), "MNIST\nAccuracy")
+        style_boxed_axis(ax3, points_comp, (0, 100), "MNIST\nCertified\nRobustness", color='orange')
 
         z_min, z_max = min(points_zoom) - 0.05, max(points_zoom) + 0.05
-        style_boxed_axis(ax2, points_zoom, (z_min, z_max), "Accuracy Zoomed In")
+        style_boxed_axis(ax2, points_zoom, (z_min, z_max), "Accuracy (zoomed)", title_pos='top')
 
-        # 2. Draw UNIFORM lines between corresponding points (Same Index)
-        line_style = dict(color="royalblue", linestyle="-", alpha=0.2, linewidth=0.8)
+        # 3. Connection Lines
+        line_style = dict(color="royalblue", alpha=0.2, linewidth=0.8, linestyle="-")
 
-        for i in range(len(points_zoom)):
-            # Connect Fig 1 (Middle) UP to Fig 2 (Top-Right)
-            con12 = ConnectionPatch(xyA=(points_zoom[i], 0), xyB=(points_zoom[i], 0),
+        # Fig 1 to 2 (Curved) - Adjusted rad for tighter space
+        for val in points_zoom:
+            con12 = ConnectionPatch(xyA=(val, 0), xyB=(val, 0),
                                     coordsA="data", coordsB="data",
-                                    axesA=ax1, axesB=ax2, **line_style)
+                                    axesA=ax1, axesB=ax2,
+                                    connectionstyle="arc3,rad=-0.2", **line_style)
             fig.add_artist(con12)
 
-            # Connect Fig 1 (Middle) DOWN to Fig 3 (Bottom)
+        # Fig 1 to 3 (Straight)
+        for i in range(len(points_zoom)):
             con13 = ConnectionPatch(xyA=(points_zoom[i], 0), xyB=(points_comp[i], 0),
                                     coordsA="data", coordsB="data",
                                     axesA=ax1, axesB=ax3, **line_style)
             fig.add_artist(con13)
+
+        # 4. Tighten outer margins
+        plt.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1)
 
         plt.savefig(os.path.join("plots", "MNIST_variance.png"))
         plt.close()
