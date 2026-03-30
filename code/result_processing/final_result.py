@@ -6,6 +6,7 @@ from matplotlib.patches import ConnectionPatch
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 from concurrent.futures import ProcessPoolExecutor
+from matplotlib.ticker import FixedLocator, ScalarFormatter
 
 
 
@@ -139,85 +140,72 @@ class FinalResult:
             return None
         
 
+
     def mnist_plotting(self):
+        # Load and prepare data
         df_accuracy = pd.read_csv(os.path.join("results", "MNIST_model_stats.csv"))
         df_accuracy = df_accuracy[df_accuracy["prune_type"] == "baseline"]
-        df_accuracy = df_accuracy[["seed", "accuracy"]]
         df_accuracy["accuracy"] *= 100
 
         df_robustness = pd.read_csv(os.path.join("results", "result_by_model_and_seed.csv"))
         df_robustness = df_robustness[df_robustness["dataset"] == "MNIST"]
         df_robustness = df_robustness[df_robustness["pruning"] == "baseline"]
         df_robustness = df_robustness[df_robustness["epsilon"] == 0.007]
-        df_robustness = df_robustness[["seed", "result"]]
 
-        df = df_accuracy.merge(df_robustness, on="seed", how="inner")
-        print(df)
+        df = df_accuracy.merge(df_robustness[["seed", "result"]], on="seed", how="inner")
+        
+        points_acc = df['accuracy'].tolist()
+        points_rob = df['result'].tolist()
+        
+        # Fixed Standard Deviation Values
+        std_acc = 0.057
+        std_rob = 28.8
 
-        points_zoom = df['accuracy'].tolist()
-        points_comp = df['result'].tolist()
+        # 1. Compact Figure Setup
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 2.8))
+        plt.subplots_adjust(hspace=1.0)
+        
+        def style_boxed_axis(ax, data, std_val, label_dist, title, color='royalblue'):
+            ax.scatter(data, [0]*len(data), color=color, s=35, zorder=5, alpha=0.6, edgecolors='white', linewidth=0.5)
+            ax.axhline(0, color='black', linewidth=0.8, alpha=0.2)
+            
+            # 2. Custom Scale: Logarithmic on the "Distance to 100"
+            # This makes 10-90, 90-99, and 99-99.9 take up equal visual horizontal space.
+            # Forward transform: -log10(100 - x); Reverse transform: 100 - 10^-x
+            ax.set_xscale('function', functions=(
+                lambda x: -np.log10(np.maximum(100.1 - x, 1e-5)), 
+                lambda x: 100.1 - 10**(-x)
+            ))
+            
+            # 3. Set Range 1 to 99.9
+            ax.set_xlim(1, 99.9) 
+            
+            # 4. Tick Labels with % units
+            tick_vals = [10, 50, 90, 95, 99, 99.9]
+            tick_labels = ['10%', '50%', '90%', '95%', '99%', '99.9%']
+            ax.xaxis.set_major_locator(FixedLocator(tick_vals))
+            ax.set_xticklabels(tick_labels, fontsize=8)
 
-        # 1. Tighter figure height
-        fig = plt.figure(figsize=(12, 3.5))
-
-        # 2. REDUCED hspace (vertical) and wspace (horizontal)
-        # hspace=0.4 (down from 1.2) and wspace=0.3 (down from 0.6)
-        gs = fig.add_gridspec(2, 2, width_ratios=[3, 1], hspace=0.4, wspace=0.2)
-
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax3 = fig.add_subplot(gs[1, 0])
-        ax2 = fig.add_subplot(gs[0, 1])
-
-        def style_boxed_axis(ax, data, xlim, title, color='royalblue', title_pos='left'):
-            ax.scatter(data, [0]*len(data), color=color, s=30, zorder=5)
-            ax.axhline(0, color='black', linewidth=0.8, alpha=0.3)
-            ax.set_xlim(xlim)
-            ax.set_ylim(-0.1, 0.1) # Slim Y-axis
+            # 5. Vertical compression
+            ax.set_ylim(-0.05, 0.05)
             ax.set_yticks([])
             
-            if title_pos == 'left':
-                # Reduced labelpad to keep title closer to the box
-                ax.set_ylabel(title, fontsize=9, fontweight='bold', rotation=0, 
-                            labelpad=20, va='center', ha='right')
-            else:
-                # Reduced pad for top title
-                ax.set_title(title, fontsize=9, fontweight='bold', pad=5)
+            ax.set_ylabel(title, fontsize=8, fontweight='bold', rotation=0, 
+                        labelpad=45, va='center', ha='right')
+            
+            # 6. Standard Deviation notation (Fixed Values + Units)
+            ax.text(label_dist, 0.65, f"$\sigma$ = {std_val}%", transform=ax.transAxes, 
+                    fontsize=8, fontweight='bold', color=color, ha='right')
             
             for spine in ax.spines.values():
                 spine.set_visible(True)
 
         # Plotting
-        style_boxed_axis(ax1, points_zoom, (0, 100), "MNIST\nAccuracy")
-        style_boxed_axis(ax3, points_comp, (0, 100), "MNIST\nCertified\nRobustness", color='orange')
+        style_boxed_axis(ax1, points_acc, std_acc, 0.86, "MNIST\nAccuracy")
+        style_boxed_axis(ax2, points_rob, std_rob, 0.23, "MNIST\nCertified\nRobustness", color='orange')
 
-        z_min, z_max = min(points_zoom) - 0.05, max(points_zoom) + 0.05
-        style_boxed_axis(ax2, points_zoom, (z_min, z_max), "Accuracy (zoomed)", title_pos='top')
-
-        # 3. Connection Lines
-        line_style = dict(color="royalblue", alpha=0.2, linewidth=0.8, linestyle="-")
-
-        # Fig 1 to 2 (Curved) - Adjusted rad for tighter space
-        for val in points_zoom:
-            con12 = ConnectionPatch(xyA=(val, 0), xyB=(val, 0),
-                                    coordsA="data", coordsB="data",
-                                    axesA=ax1, axesB=ax2,
-                                    connectionstyle="arc3,rad=-0.2", **line_style)
-            fig.add_artist(con12)
-
-        # Fig 1 to 3 (Straight)
-        for i in range(len(points_zoom)):
-            con13 = ConnectionPatch(xyA=(points_zoom[i], 0), xyB=(points_comp[i], 0),
-                                    coordsA="data", coordsB="data",
-                                    axesA=ax1, axesB=ax3, **line_style)
-            fig.add_artist(con13)
-
-        # 4. Tighten outer margins
-        plt.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1)
-
-        plt.savefig(os.path.join("plots", "MNIST_variance.png"))
+        plt.savefig(os.path.join("plots", "MNIST_variance.png"), bbox_inches='tight', dpi=300)
         plt.close()
-
-
 
 
 if __name__ == "__main__":
